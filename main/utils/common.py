@@ -30,7 +30,7 @@ class MergeMap3:
                 combined = combined + current_audio
         combined.export(self.output, format="mp3")
         print(f"audio file merged successfully and save to  {self.output}")
-        # self.delete_tmp()
+        self.delete_tmp()
 
     def list_files_in_directory(self):
         file_paths = []

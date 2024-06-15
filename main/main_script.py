@@ -6,7 +6,7 @@ Note: ssml must be well-formed according to:
 """
 import os
 from google.cloud import texttospeech
-from utils import common, mergeMap3
+from utils import common
 
 os.environ['HTTP_PROXY'] = 'http://127.0.0.1:7890'
 os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     voice_map = {"Alice": common.Constants.JOURNEY_F_NAME, "Bob": common.Constants.JOURNEY_D_NAME}
     randomRobin = common.RandomRobin(len(voice_names))
 
-    topic_name = 'Discussion on Financial Settlements'
+    topic_name = 'test'
     lines = get_linse(f'{common.Constants.INPUT_BASE_FOLDER}/txt/{topic_name}.txt')
     for index in range(len(lines)):
         voice_name = voice_names[randomRobin.get_index()]
@@ -84,6 +84,6 @@ if __name__ == '__main__':
                 text = line
             print(f'{index}:{voice_name} - {text}')
             synthesis_voice(text, output_file, voice_name)
-    mergeMap3 = mergeMap3.MergeMap3(f'{common.Constants.OUTPUT_BASE_FOLDER}/tmp/',
-                                    f'{common.Constants.OUTPUT_BASE_FOLDER}/{topic_name}-3.mp3')
+    mergeMap3 = common.MergeMap3(f'{common.Constants.OUTPUT_BASE_FOLDER}/tmp/',
+                                 f'{common.Constants.OUTPUT_BASE_FOLDER}/{topic_name}.mp3')
     mergeMap3.merge()
