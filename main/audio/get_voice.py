@@ -12,7 +12,7 @@ os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
 # Instantiates a client
 client = texttospeech.TextToSpeechClient()
 
-file_path = '../resource/txt/voice-content.txt'
+file_path = '../../resource/txt/voice-content.txt'
 with open(file_path, 'r', encoding='utf-8') as file:
     text_content = file.read()
 
