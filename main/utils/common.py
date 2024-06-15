@@ -2,6 +2,15 @@ import os
 from pydub import AudioSegment
 
 
+class Constants:
+    JOURNEY_D_NAME = 'en-US-Journey-D'
+    JOURNEY_F_NAME = 'en-US-Journey-F'
+    JOURNEY_O_NAME = 'en-US-Journey-O'
+
+    OUTPUT_BASE_FOLDER = '../output'
+    INPUT_BASE_FOLDER = '../resource'
+
+
 class MergeMap3:
 
     def __init__(self, map3_input_folder, output):
@@ -39,3 +48,18 @@ class MergeMap3:
                 print(f"Deleted file: {mp3_path}")
             except OSError as e:
                 print(f"Error deleting file {mp3_path}: {e}")
+
+
+class RandomRobin:
+
+    def __init__(self, length):
+        self.current_index = 0
+        self.length = length
+
+    def get_index(self):
+        if self.current_index >= self.length - 1:
+            self.current_index = 0
+            return 0
+        else:
+            self.current_index = self.current_index + 1
+        return self.current_index
