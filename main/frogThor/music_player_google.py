@@ -7,6 +7,13 @@ import re
 from tkinter import filedialog, messagebox
 from playerUtil import get_mp3_duration
 import re
+import math
+
+
+#
+# def update_text(text_widget, new_text):
+#     """动态更新Text控件的内容"""
+
 
 class MusicPlayer:
     def __init__(self, master):
@@ -15,6 +22,8 @@ class MusicPlayer:
 
         self.music_dir = (r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words\en-US'
                           r'-Journey-D')  # 替换成你的音乐目录
+        self.music_explain_dir = (
+            r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words-and-explain')  # 替换成你的音乐目录
         self.music_files = []
 
         self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
@@ -24,6 +33,11 @@ class MusicPlayer:
         self.search_term = ""
         self.current_index = 10
         self.current_see = 0
+        self.text_widget = None
+        self.long_text = ''
+        self.current_select_index = 0
+        self.selected_indices = []
+        self.selected_indices_max_index = 0
 
         # 初始化 Pygame
         pygame.mixer.init()
@@ -97,8 +111,30 @@ class MusicPlayer:
         # 绑定事件
         self.playlist.bind("<<ListboxSelect>>", self.handle_selection)
 
+        # self.button_play_loop()
         # 初始化播放状态
         self.update_controls()
+        self.create_window()
+
+    def create_window(self):
+        # 创建一个Text控件来显示多行文本
+        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50)  # wrap='word' 表示在单词边界处换行
+        self.text_widget.pack(side=tk.BOTTOM, fill=tk.X, expand=False, pady=(0, 10))  # 放置在底部，水平填充，不扩展，并添加一些内边距
+
+        # 插入一些长文本到Text控件中
+        self.text_widget.insert(tk.END, '')
+
+        # 如果你想要禁用Text控件的编辑功能，可以设置其state为'disabled'
+        # self.text_widget.config(state='disabled')
+        self.update_content()
+        # 运行Tkinter事件循环
+        self.master.mainloop()
+
+    def update_content(self):
+        # print(f'{self.long_text}')
+        self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
+        self.text_widget.insert(tk.END, self.long_text)  # 插入新文本
+        self.master.after(500, self.update_content)  # 每2秒更新一次内容
 
     # 搜索歌曲
     def search(self, event=None):
@@ -122,6 +158,7 @@ class MusicPlayer:
             for file in self.music_files:
                 self.playlist.insert(tk.END, os.path.splitext(file)[0])
         print(f'{self.playlist}')
+
     # 播放音频
     def play(self):
         self.playing = True
@@ -140,18 +177,42 @@ class MusicPlayer:
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
         self.current_see = self.current_track
+        self.long_text = self.get_explain(track)
+
+    def get_explain(self, word):
+        explain_file = f'{self.music_explain_dir}/{word}.txt'
+        if os.path.exists(explain_file):
+            with open(explain_file, 'r', encoding='utf-8') as file:
+                content = file.read()
+            print(content)
+            return content
+        else:
+            return ''
 
     def button_play(self):
-        selected_indices = self.playlist.curselection()
-        print(f'{selected_indices}')
-        if selected_indices:
-            for current_track in selected_indices:
+        self.selected_indices = self.playlist.curselection()
+        print(f'{self.selected_indices}')
+
+        self.selected_indices_max_index
+        if self.selected_indices:
+            # self.button_play_loop()
+            for current_track in self.selected_indices:
                 self.current_track = current_track
                 track = self.playlist.get(self.current_track)
                 file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
                 pygame.mixer.music.load(file_path)
                 pygame.mixer.music.play()
                 time.sleep(get_mp3_duration(file_path))
+
+    # def button_play_loop(self):
+    #     if self.current_select_index < len(self.selected_indices) - 1:
+    #         self.current_select_index = self.current_select_index + 1
+    #         track = self.playlist.get(self.selected_indices[self.current_select_index])
+    #         file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
+    #         pygame.mixer.music.load(file_path)
+    #         pygame.mixer.music.play()
+    #         print(f'等待时间： {math.ceil(get_mp3_duration(file_path))}')
+    #         self.master.after(math.ceil(get_mp3_duration(file_path)), self.update_content)  # 每2秒更新一次内容
 
     # 暂停音频
     def pause(self):
