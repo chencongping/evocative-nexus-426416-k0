@@ -9,7 +9,6 @@ from google.cloud import texttospeech
 from utils import common
 import time
 
-
 os.environ['HTTP_PROXY'] = 'http://127.0.0.1:7890'
 os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
 
@@ -64,34 +63,20 @@ def synthesis_voice(_text_content, output, _voice_name):
 
 
 if __name__ == '__main__':
-    voice_names = [common.Constants.JOURNEY_F_NAME, common.Constants.JOURNEY_D_NAME,
-                   common.Constants.JOURNEY_O_NAME]
-    voice_map = {"Alice": common.Constants.JOURNEY_F_NAME, "Bob": common.Constants.JOURNEY_D_NAME}
-    randomRobin = common.RandomRobin(len(voice_names))
-
-    # topic_name = 'Discussion on Financial Settlements-words'
-    topic_name = 'Discussion on Financial Settlements-words'
-
+    voice_name = common.Constants.JOURNEY_D_NAME
+    topic_name = '5500-words'
     lines = get_linse(f'{common.Constants.INPUT_BASE_FOLDER}/txt/{topic_name}.txt')
+    output_folder = f'{common.Constants.OUTPUT_BASE_FOLDER}/{voice_name}'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     for index in range(len(lines)):
-        if index % 20 == 0:
-            time.sleep(10)
-        voice_name = voice_names[randomRobin.get_index()]
-        line = lines[index]
-        line = line.strip()
-        output_file = f'{common.Constants.OUTPUT_BASE_FOLDER}/tmp/{topic_name}-{str(index).zfill(10)}'
-        if line != '' and not os.path.isfile(f'{output_file}.mp3'):
-            voice_name_name_text = line.split(": ")
-            if len(voice_name_name_text) > 1:
-                voice_name = voice_map[voice_name_name_text[0]]
-                if voice_name is None:
-                    voice_name = common.Constants.JOURNEY_O_NAME
-                text = voice_name_name_text[1]
-            else:
-                voice_name = common.Constants.JOURNEY_O_NAME
-                text = line
-            print(f'{index}:{voice_name} - {text}')
-            synthesis_voice(text, output_file, voice_name)
-    mergeMap3 = common.MergeMap3(f'{common.Constants.OUTPUT_BASE_FOLDER}/tmp/',
-                                 f'{common.Constants.OUTPUT_BASE_FOLDER}/{topic_name}.mp3')
-    mergeMap3.merge()
+        try:
+            line = lines[index]
+            line = line.strip()
+            output_file = f'{output_folder}/{line}'
+            if line != '' and not os.path.isfile(f'{output_file}.mp3'):
+                print(f'{index}:{voice_name} - {line}')
+                synthesis_voice(line, output_file, voice_name)
+        except Exception as e:
+            print(f"Exception: {e}")
+            time.sleep(60)
