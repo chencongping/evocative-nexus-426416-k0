@@ -2,22 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import pygame
-import schedule
-import threading
-import time
-from mutagen.mp3 import MP3
-import concurrent.futures
-
-
-def get_mp3_duration(file_path):
-    audio = MP3(file_path)
-    return audio.info.length
+import re
 
 
 class MusicPlayer:
     def __init__(self, master):
-        self.loop = None
-        self.auto_play_flag = False
         self.master = master
         master.title("音乐播放器")
 
@@ -26,6 +15,7 @@ class MusicPlayer:
         self.current_track = 0
         self.playing = False
         self.shuffle = False
+        self.search_term = ""
 
         # 初始化 Pygame
         pygame.mixer.init()
@@ -33,6 +23,15 @@ class MusicPlayer:
         # 创建主框架
         self.main_frame = tk.Frame(master)
         self.main_frame.pack(fill="both", expand=True)
+
+        # 创建搜索框框架
+        self.search_frame = tk.Frame(self.main_frame)
+        self.search_frame.pack(side="top", fill="x")
+
+        # 创建搜索框
+        self.search_entry = tk.Entry(self.search_frame)
+        self.search_entry.pack(side="left", padx=10, pady=10)
+        self.search_entry.bind("<KeyRelease>", self.search)
 
         # 创建播放列表框架
         self.playlist_frame = tk.Frame(self.main_frame)
@@ -44,8 +43,7 @@ class MusicPlayer:
 
         # 创建播放列表
         self.playlist = tk.Listbox(self.playlist_frame, selectmode="extended", font=("Arial", 12))
-        for file in self.music_files:
-            self.playlist.insert(tk.END, os.path.splitext(file)[0])
+        self.update_playlist()
         self.playlist.pack(fill="both", expand=True)
 
         # 创建滚动条
@@ -56,10 +54,6 @@ class MusicPlayer:
         # 创建播放按钮
         self.play_button = tk.Button(self.control_frame, text="播放", command=self.play)
         self.play_button.pack(pady=10)
-
-        # 创建播放按钮
-        self.auto_play_button = tk.Button(self.control_frame, text="自动播放", command=self.auto_play)
-        self.auto_play_button.pack(pady=10)
 
         # 创建暂停按钮
         self.pause_button = tk.Button(self.control_frame, text="暂停", command=self.pause, state=tk.DISABLED)
@@ -87,6 +81,22 @@ class MusicPlayer:
         # 初始化播放状态
         self.update_controls()
 
+    # 搜索歌曲
+    def search(self, event=None):
+        self.search_term = self.search_entry.get()
+        self.update_playlist()
+
+    # 更新播放列表
+    def update_playlist(self):
+        self.playlist.delete(0, tk.END)
+        if self.search_term:
+            for file in self.music_files:
+                if re.search(self.search_term, os.path.splitext(file)[0]):
+                    self.playlist.insert(tk.END, os.path.splitext(file)[0])
+        else:
+            for file in self.music_files:
+                self.playlist.insert(tk.END, os.path.splitext(file)[0])
+
     # 播放音频
     def play(self):
         self.playing = True
@@ -94,46 +104,37 @@ class MusicPlayer:
 
         if self.shuffle:
             self.current_track = self.random_track()
-        self.current_track = self.current_track + 1
-        track = self.music_files[self.current_track]
-        file_path = os.path.join(self.music_dir, track)
+
+        selected_indices = self.playlist.curselection()
+        if selected_indices:
+            self.current_track = selected_indices[0]
+
+        track = self.playlist.get(self.current_track)
+        file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
-        print(f'播放成功。。。{file_path}')
-        return get_mp3_duration(file_path)
-
-    def auto_play(self):
-        print("auto play")
-        if self.auto_play_flag:
-            self.auto_play_flag = False
-        else:
-            self.auto_play_flag = True
 
     # 暂停音频
     def pause(self):
         self.playing = False
         self.update_controls()
         pygame.mixer.music.pause()
-        print(f'暂停成功。。。')
 
     # 停止音频
     def stop(self):
         self.playing = False
         self.update_controls()
         pygame.mixer.music.stop()
-        print(f'停止音频成功。。。')
 
     # 切换循环播放模式
     def toggle_loop(self):
         self.loop_button.config(text="循环" if not self.loop else "单曲")
         self.loop = not self.loop
-        print(f'切换循环播放模式。。。')
 
     # 切换随机播放模式
     def toggle_shuffle(self):
         self.shuffle_button.config(text="随机" if not self.shuffle else "顺序")
         self.shuffle = not self.shuffle
-        print(f'切换随机播放模式。。。')
 
     # 全选/取消全选
     def select_all(self):
@@ -152,42 +153,22 @@ class MusicPlayer:
 
     # 更新控制按钮状态
     def update_controls(self):
-        # if self.playing:
-        #     self.play_button.config(state=tk.DISABLED)
-        #     self.pause_button.config(state=tk.NORMAL)
-        #     self.stop_button.config(state=tk.NORMAL)
-        # else:
-        #     self.play_button.config(state=tk.NORMAL)
-        #     self.pause_button.config(state=tk.DISABLED)
-        #     self.stop_button.config(state=tk.DISABLED)
-        self.play_button.config(state=tk.NORMAL)
-        self.pause_button.config(state=tk.NORMAL)
-        self.stop_button.config(state=tk.NORMAL)
+        if self.playing:
+            self.play_button.config(state=tk.DISABLED)
+            self.pause_button.config(state=tk.NORMAL)
+            self.stop_button.config(state=tk.NORMAL)
+        else:
+            self.play_button.config(state=tk.NORMAL)
+            self.pause_button.config(state=tk.DISABLED)
+            self.stop_button.config(state=tk.DISABLED)
 
     # 获取随机的歌曲索引
     def random_track(self):
         import random
-        return random.randint(0, len(self.music_files) - 1)
-
-
-# 定义子线程要执行的任务函数
-def task(_player, duration):
-    pass
-    # while True:
-    #     print(f'{_player.auto_play_flag}, duration = {duration}')
-    #     if _player.auto_play_flag:
-    #         sleep_time = _player.play()
-    #         print(f"子线程正在运行: sleep_time = {sleep_time}")
-    #         time.sleep(sleep_time)
-    #     else:
-    #         time.sleep(1)
+        return random.randint(0, len(self.playlist.get(0, tk.END)) - 1)
 
 
 # 创建主窗口
 root = tk.Tk()
 player = MusicPlayer(root)
-# with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-#     # 提交任务并获取 future 对象
-#     futures = executor.submit(task, player, 1)
-
 root.mainloop()
