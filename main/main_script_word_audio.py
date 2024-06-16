@@ -64,19 +64,19 @@ def synthesis_voice(_text_content, output, _voice_name):
 
 if __name__ == '__main__':
     voice_name = common.Constants.JOURNEY_D_NAME
-    topic_name = '5500-words'
+    topic_name = '3500-words'
     lines = get_linse(f'{common.Constants.INPUT_BASE_FOLDER}/txt/{topic_name}.txt')
-    output_folder = f'{common.Constants.OUTPUT_BASE_FOLDER}/{voice_name}'
+    output_folder = f'{common.Constants.OUTPUT_BASE_FOLDER}/{topic_name}/{voice_name}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     for index in range(len(lines)):
-        try:
-            line = lines[index]
-            line = line.strip()
-            output_file = f'{output_folder}/{line}'
-            if line != '' and not os.path.isfile(f'{output_file}.mp3'):
+        line = lines[index]
+        line = line.strip()
+        output_file = f'{output_folder}/{line}'
+        if line != '' and not os.path.isfile(f'{output_file}.mp3'):
+            try:
                 print(f'{index}:{voice_name} - {line}')
                 synthesis_voice(line, output_file, voice_name)
-        except Exception as e:
-            print(f"Exception: {e}")
-            time.sleep(60)
+            except Exception as e:
+                print(f"Exception: {e}")
+                time.sleep(60)

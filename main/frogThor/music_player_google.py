@@ -6,13 +6,15 @@ import pygame
 import re
 from tkinter import filedialog, messagebox
 from playerUtil import get_mp3_duration
+import re
 
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
-        master.title("音乐播放器")
+        master.title("单词杀手")
 
-        self.music_dir = r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\en-US-Journey-D'  # 替换成你的音乐目录
+        self.music_dir = (r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words\en-US'
+                          r'-Journey-D')  # 替换成你的音乐目录
         self.music_files = []
 
         self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
@@ -20,7 +22,8 @@ class MusicPlayer:
         self.playing = False
         self.shuffle = False
         self.search_term = ""
-        self.current_index = 0
+        self.current_index = 10
+        self.current_see = 0
 
         # 初始化 Pygame
         pygame.mixer.init()
@@ -100,10 +103,16 @@ class MusicPlayer:
     # 搜索歌曲
     def search(self, event=None):
         self.search_term = self.search_entry.get()
+        self.search_term = re.sub(r'\s+', '', self.search_term)
+        print(f'{self.search_term}')
         self.update_playlist()
+        if self.search_term == '' or self.search_term is None:
+            self.playlist.see(99)
+            print(f'go {self.current_see}')
 
     # 更新播放列表
     def update_playlist(self):
+        print(f'更新播放列表')
         self.playlist.delete(0, tk.END)
         if self.search_term:
             for file in self.music_files:
@@ -112,7 +121,7 @@ class MusicPlayer:
         else:
             for file in self.music_files:
                 self.playlist.insert(tk.END, os.path.splitext(file)[0])
-
+        print(f'{self.playlist}')
     # 播放音频
     def play(self):
         self.playing = True
@@ -130,6 +139,7 @@ class MusicPlayer:
         file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
+        self.current_see = self.current_track
 
     def button_play(self):
         selected_indices = self.playlist.curselection()
@@ -210,7 +220,8 @@ class MusicPlayer:
     def load_directory(self):
         directory = filedialog.askdirectory()
         if directory:
-            self.music_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.mp3')]
+            # self.music_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.mp3')]
+            self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
             self.update_listbox()
             self.current_index = 0
             self.play()
