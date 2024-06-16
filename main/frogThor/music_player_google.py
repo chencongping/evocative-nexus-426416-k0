@@ -1,9 +1,11 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 import os
 import pygame
 import re
-
+from tkinter import filedialog, messagebox
+from playerUtil import get_mp3_duration
 
 class MusicPlayer:
     def __init__(self, master):
@@ -11,11 +13,14 @@ class MusicPlayer:
         master.title("音乐播放器")
 
         self.music_dir = r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\en-US-Journey-D'  # 替换成你的音乐目录
+        self.music_files = []
+
         self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
         self.current_track = 0
         self.playing = False
         self.shuffle = False
         self.search_term = ""
+        self.current_index = 0
 
         # 初始化 Pygame
         pygame.mixer.init()
@@ -23,6 +28,17 @@ class MusicPlayer:
         # 创建主框架
         self.main_frame = tk.Frame(master)
         self.main_frame.pack(fill="both", expand=True)
+
+        # 添加菜单
+        menubar = tk.Menu(self.master)
+        self.master.config(menu=menubar)
+
+        filemenu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="文件", menu=filemenu)
+        filemenu.add_command(label="打开文件", command=self.load_file)
+        filemenu.add_command(label="打开目录", command=self.load_directory)
+        filemenu.add_separator()
+        filemenu.add_command(label="退出", command=self.master.quit)
 
         # 创建搜索框框架
         self.search_frame = tk.Frame(self.main_frame)
@@ -52,7 +68,7 @@ class MusicPlayer:
         self.playlist.config(yscrollcommand=self.scrollbar.set)
 
         # 创建播放按钮
-        self.play_button = tk.Button(self.control_frame, text="播放", command=self.play)
+        self.play_button = tk.Button(self.control_frame, text="播放", command=self.button_play)
         self.play_button.pack(pady=10)
 
         # 创建暂停按钮
@@ -106,6 +122,7 @@ class MusicPlayer:
             self.current_track = self.random_track()
 
         selected_indices = self.playlist.curselection()
+        print(f'{selected_indices}')
         if selected_indices:
             self.current_track = selected_indices[0]
 
@@ -113,6 +130,18 @@ class MusicPlayer:
         file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
+
+    def button_play(self):
+        selected_indices = self.playlist.curselection()
+        print(f'{selected_indices}')
+        if selected_indices:
+            for current_track in selected_indices:
+                self.current_track = current_track
+                track = self.playlist.get(self.current_track)
+                file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
+                pygame.mixer.music.load(file_path)
+                pygame.mixer.music.play()
+                time.sleep(get_mp3_duration(file_path))
 
     # 暂停音频
     def pause(self):
@@ -153,19 +182,44 @@ class MusicPlayer:
 
     # 更新控制按钮状态
     def update_controls(self):
-        if self.playing:
-            self.play_button.config(state=tk.DISABLED)
-            self.pause_button.config(state=tk.NORMAL)
-            self.stop_button.config(state=tk.NORMAL)
-        else:
-            self.play_button.config(state=tk.NORMAL)
-            self.pause_button.config(state=tk.DISABLED)
-            self.stop_button.config(state=tk.DISABLED)
+        # if self.playing:
+        #     self.play_button.config(state=tk.DISABLED)
+        #     self.pause_button.config(state=tk.NORMAL)
+        #     self.stop_button.config(state=tk.NORMAL)
+        # else:
+        #     self.play_button.config(state=tk.NORMAL)
+        #     self.pause_button.config(state=tk.DISABLED)
+        #     self.stop_button.config(state=tk.DISABLED)
+        self.play_button.config(state=tk.NORMAL)
+        self.pause_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.NORMAL)
 
     # 获取随机的歌曲索引
     def random_track(self):
         import random
         return random.randint(0, len(self.playlist.get(0, tk.END)) - 1)
+
+    def load_file(self):
+        file = filedialog.askopenfilename(filetypes=[("MP3 文件", "*.mp3")])
+        if file:
+            self.music_files = [file]
+            self.update_listbox()
+            self.current_index = 0
+            self.play()
+
+    def load_directory(self):
+        directory = filedialog.askdirectory()
+        if directory:
+            self.music_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.mp3')]
+            self.update_listbox()
+            self.current_index = 0
+            self.play()
+
+    def update_listbox(self):
+        self.playlist.delete(0, tk.END)
+        for idx, file in enumerate(self.music_files):
+            self.playlist.insert(tk.END, os.path.splitext(os.path.basename(file))[0])
+            self.playlist.itemconfig(idx, {'bg': 'white'})
 
 
 # 创建主窗口
