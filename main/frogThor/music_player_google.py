@@ -78,7 +78,7 @@ class MusicPlayer:
         # 创建播放列表
         self.playlist = tk.Listbox(self.playlist_frame, selectmode="extended", font=("Arial", 14))
         self.update_playlist()
-        self.playlist.pack(fill="both", expand=True, padx=5, pady=5)
+        self.playlist.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
         # 创建滚动条
         self.scrollbar = tk.Scrollbar(self.playlist_frame, orient="vertical", command=self.playlist.yview)
@@ -270,7 +270,6 @@ class MusicPlayer:
 
         self.selected_indices_max_index
         if self.selected_indices:
-            # self.button_play_loop()
             for current_track in self.selected_indices:
                 self.current_track = current_track
                 track = self.playlist.get(self.current_track)

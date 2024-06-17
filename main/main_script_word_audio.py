@@ -64,7 +64,7 @@ def synthesis_voice(_text_content, output, _voice_name):
 
 if __name__ == '__main__':
     voice_name = common.Constants.JOURNEY_D_NAME
-    topic_name = '3500-words'
+    topic_name = '5500-words'
     lines = get_linse(f'{common.Constants.INPUT_BASE_FOLDER}/txt/{topic_name}.txt')
     output_folder = f'{common.Constants.OUTPUT_BASE_FOLDER}/{topic_name}/{voice_name}'
     if not os.path.exists(output_folder):
