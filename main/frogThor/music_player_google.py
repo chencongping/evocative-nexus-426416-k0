@@ -7,7 +7,9 @@ import re
 from tkinter import filedialog, messagebox
 from playerUtil import get_mp3_duration
 import re
-import math
+import tkinter.font as tkFont
+from tkinter import Menu, messagebox
+import pyperclip
 
 
 #
@@ -75,7 +77,7 @@ class MusicPlayer:
         self.control_frame.pack(side="right")
 
         # 创建播放列表
-        self.playlist = tk.Listbox(self.playlist_frame, selectmode="extended", font=("Arial", 12))
+        self.playlist = tk.Listbox(self.playlist_frame, selectmode="extended", font=("Arial", 14))
         self.update_playlist()
         self.playlist.pack(fill="both", expand=True)
 
@@ -111,10 +113,84 @@ class MusicPlayer:
         # 绑定事件
         self.playlist.bind("<<ListboxSelect>>", self.handle_selection)
 
+        # 创建右键菜单
+        self.popup_menu = Menu(self.playlist, tearoff=0)
+        self.popup_menu.add_command(label="复制", command=self.copy_selected)
+        # 绑定右键点击事件
+        self.playlist.bind("<Button-3>", self.show_popup)
+
+        # 绑定快捷键
+        self.playlist.bind("<Control-c>", self.copy_to_clipboard)
+        self.search_entry.bind("<Control-v>", self.paste_from_clipboard)
+        self.search_entry.bind("<Control-z>", self.undo)
+        self.search_entry.bind("<Control-y>", self.redo)
+
+        # 用于撤销/重做功能的变量
+        self.undo_stack = []
+        self.redo_stack = []
+
         # self.button_play_loop()
         # 初始化播放状态
         self.update_controls()
         self.create_window()
+
+    def copy_to_clipboard(self, event):
+        selected_items = self.playlist.curselection()
+        selected_texts = [self.playlist.get(index) for index in selected_items]
+        text_to_copy = "\n".join(selected_texts)
+        pyperclip.copy(text_to_copy)
+        print(f'复制{text_to_copy}')
+
+    def paste_from_clipboard(self, event):
+        try:
+            clipboard_text = self.master.clipboard_get()
+            self.search_entry.insert(tk.INSERT, clipboard_text)
+            print(f'粘贴{clipboard_text}')
+        except tk.TclError:
+            print("Clipboard is empty or invalid content.")
+        return "break"
+
+    def undo(self, event):
+        if self.search_entry.get():
+            self.redo_stack.append(self.search_entry.get())
+            if self.undo_stack:
+                last_state = self.undo_stack.pop()
+                self.search_entry.delete(0, tk.END)
+                self.search_entry.insert(0, last_state)
+            print("撤销")
+        return "break"
+
+    def redo(self, event):
+        if self.redo_stack:
+            last_state = self.redo_stack.pop()
+            self.undo_stack.append(last_state)
+            self.search_entry.delete(0, tk.END)
+            self.search_entry.insert(0, last_state)
+            print("重做")
+        return "break"
+
+    def show_popup(self, event):
+        try:
+            # 检查是否有选中的项
+            selected_items = self.playlist.curselection()
+            if not selected_items:
+                return  # 如果没有选中的项，则不显示菜单
+
+            # 显示菜单
+            self.popup_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            # 确保菜单在点击其他位置时消失
+            self.popup_menu.grab_release()
+
+    def copy_selected(self):
+        # 获取选中的项并复制到某个地方（例如剪贴板）
+        selected_items = self.playlist.curselection()
+        selected_texts = [self.playlist.get(index) for index in selected_items]
+        text_to_copy = "\n".join(selected_texts)
+        print(f'复制{text_to_copy}')
+        # 这里只是简单地将文本打印出来，你可以根据需要修改（例如使用pyperclip库复制到剪贴板）
+        # messagebox.showinfo("复制", "已复制：\n" + text_to_copy)
+        pyperclip.copy(text_to_copy)
 
     def create_window(self):
         # 创建一个Text控件来显示多行文本
@@ -132,6 +208,10 @@ class MusicPlayer:
 
     def update_content(self):
         # print(f'{self.long_text}')
+        # 创建字体样式
+        font_style = tkFont.Font(family="Helvetica", size=14)  # 使用Helvetica字体，大小为14
+        # 设置Text控件的字体
+        self.text_widget.configure(font=font_style)
         self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
         self.text_widget.insert(tk.END, self.long_text)  # 插入新文本
         self.master.after(500, self.update_content)  # 每2秒更新一次内容

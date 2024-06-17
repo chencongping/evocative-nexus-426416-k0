@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词杀手</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .search-box, .controls, .playlist, .text-widget {
+            margin: 20px 0;
+        }
+        .playlist {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .text-widget {
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="search" placeholder="搜索...">
+        </div>
+        <div class="controls">
+            <button id="play">播放</button>
+            <button id="pause">暂停</button>
+            <button id="stop">停止</button>
+            <button id="loop">循环</button>
+            <button id="shuffle">随机</button>
+            <button id="select_all">全选</button>
+        </div>
+        <div class="playlist">
+            <ul id="playlist"></ul>
+        </div>
+        <div class="text-widget" id="text-widget"></div>
+    </div>
+
+    <script>
+        let playing = false;
+        let loop = false;
+        let shuffle = false;
+        let selectedTracks = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlaylist();
+
+            document.getElementById('play').addEventListener('click', play);
+            document.getElementById('pause').addEventListener('click', pause);
+            document.getElementById('stop').addEventListener('click', stop);
+            document.getElementById('loop').addEventListener('click', toggleLoop);
+            document.getElementById('shuffle').addEventListener('click', toggleShuffle);
+            document.getElementById('select_all').addEventListener('click', selectAll);
+            document.getElementById('search').addEventListener('input', loadPlaylist);
+        });
+
+        function loadPlaylist() {
+            fetch('/music_files')
+                .then(response => response.json())
+                .then(data => {
+                    const playlist = document.getElementById('playlist');
+                    playlist.innerHTML = '';
+                    const searchTerm = document.getElementById('search').value.toLowerCase();
+                    data.forEach(track => {
+                        if (track.toLowerCase().includes(searchTerm)) {
+                            const li = document.createElement('li');
+                            li.textContent = track;
+                            li.addEventListener('click', () => selectTrack(track));
+                            playlist.appendChild(li);
+                        }
+                    });
+                });
+        }
+
+        function selectTrack(track) {
+            fetch(`/explain/${track}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('text-widget').textContent = data.content;
+                });
+
+            fetch('/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ track: track }),
+            }).then(response => response.json())
+              .then(data => {
+                  console.log(data);
+              });
+        }
+
+        function play() {
+            if (selectedTracks.length > 0) {
+                fetch('/play', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ track: selectedTracks[0] }),
+                }).then(response => response.json())
+                  .then(data => {
+                      console.log(data);
+                  });
+            }
+        }
+
+        function pause() {
+            fetch('/pause', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                });
+        }
+
+        function stop() {
+            fetch('/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                });
+        }
+
+        function toggleLoop() {
+            loop = !loop;
+            fetch('/toggle_loop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loop').textContent = loop ? '单曲' : '循环';
+                    console.log(data);
+                });
+        }
+
+        function toggleShuffle() {
+            shuffle = !shuffle;
+            fetch('/toggle_shuffle', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('shuffle').textContent = shuffle ? '顺序' : '随机';
+                    console.log(data);
+                });
+        }
+
+        function selectAll() {
+            fetch('/select_all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ selected_indices: selectedTracks }),
+            }).then(response => response.json())
+              .then(data => {
+                  console.log(data);
+              });
+        }
+    </script>
+</body>
+</html>
