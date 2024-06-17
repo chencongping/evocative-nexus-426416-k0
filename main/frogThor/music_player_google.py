@@ -5,16 +5,11 @@ import os
 import pygame
 import re
 from tkinter import filedialog, messagebox
-from playerUtil import get_mp3_duration
 import re
 import tkinter.font as tkFont
 from tkinter import Menu, messagebox
 import pyperclip
-
-
-#
-# def update_text(text_widget, new_text):
-#     """动态更新Text控件的内容"""
+from playerUtil import get_mp3_duration
 
 
 class MusicPlayer:
@@ -61,25 +56,29 @@ class MusicPlayer:
 
         # 创建搜索框框架
         self.search_frame = tk.Frame(self.main_frame)
-        self.search_frame.pack(side="top", fill="x")
+        self.search_frame.pack(side="top", fill="x", padx=10, pady=10)
 
         # 创建搜索框
-        self.search_entry = tk.Entry(self.search_frame)
-        self.search_entry.pack(side="left", padx=10, pady=10)
+        self.search_entry = tk.Entry(self.search_frame, font=("Helvetica", 14))
+        self.search_entry.pack(side="left", padx=5, pady=5, fill="x", expand=True)
         self.search_entry.bind("<KeyRelease>", self.search)
 
+        # 创建清除按钮
+        self.clear_button = tk.Button(self.search_frame, text="清除", command=self.clear_search, font=("Helvetica", 14))
+        self.clear_button.pack(side="left", padx=5, pady=5)
+
         # 创建播放列表框架
-        self.playlist_frame = tk.Frame(self.main_frame)
-        self.playlist_frame.pack(side="left", fill="both", expand=True)
+        self.playlist_frame = tk.Frame(self.main_frame, bd=2, relief=tk.GROOVE)
+        self.playlist_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # 创建播放控制框架
-        self.control_frame = tk.Frame(self.main_frame)
-        self.control_frame.pack(side="right")
+        self.control_frame = tk.Frame(self.main_frame, bd=2, relief=tk.GROOVE)
+        self.control_frame.pack(side="right", fill="y", padx=10, pady=10)
 
         # 创建播放列表
         self.playlist = tk.Listbox(self.playlist_frame, selectmode="extended", font=("Arial", 14))
         self.update_playlist()
-        self.playlist.pack(fill="both", expand=True)
+        self.playlist.pack(fill="both", expand=True, padx=5, pady=5)
 
         # 创建滚动条
         self.scrollbar = tk.Scrollbar(self.playlist_frame, orient="vertical", command=self.playlist.yview)
@@ -87,27 +86,27 @@ class MusicPlayer:
         self.playlist.config(yscrollcommand=self.scrollbar.set)
 
         # 创建播放按钮
-        self.play_button = tk.Button(self.control_frame, text="播放", command=self.button_play)
+        self.play_button = tk.Button(self.control_frame, text="播放", command=self.button_play, font=("Helvetica", 14))
         self.play_button.pack(pady=10)
 
         # 创建暂停按钮
-        self.pause_button = tk.Button(self.control_frame, text="暂停", command=self.pause, state=tk.DISABLED)
+        self.pause_button = tk.Button(self.control_frame, text="暂停", command=self.pause, state=tk.DISABLED, font=("Helvetica", 14))
         self.pause_button.pack(pady=10)
 
         # 创建停止按钮
-        self.stop_button = tk.Button(self.control_frame, text="停止", command=self.stop)
+        self.stop_button = tk.Button(self.control_frame, text="停止", command=self.stop, font=("Helvetica", 14))
         self.stop_button.pack(pady=10)
 
         # 创建循环播放按钮
-        self.loop_button = tk.Button(self.control_frame, text="循环", command=self.toggle_loop)
+        self.loop_button = tk.Button(self.control_frame, text="循环", command=self.toggle_loop, font=("Helvetica", 14))
         self.loop_button.pack(pady=10)
 
         # 创建随机播放按钮
-        self.shuffle_button = tk.Button(self.control_frame, text="随机", command=self.toggle_shuffle)
+        self.shuffle_button = tk.Button(self.control_frame, text="随机", command=self.toggle_shuffle, font=("Helvetica", 14))
         self.shuffle_button.pack(pady=10)
 
         # 创建全选按钮
-        self.select_all_button = tk.Button(self.control_frame, text="全选", command=self.select_all)
+        self.select_all_button = tk.Button(self.control_frame, text="全选", command=self.select_all, font=("Helvetica", 14))
         self.select_all_button.pack(pady=10)
 
         # 绑定事件
@@ -129,7 +128,6 @@ class MusicPlayer:
         self.undo_stack = []
         self.redo_stack = []
 
-        # self.button_play_loop()
         # 初始化播放状态
         self.update_controls()
         self.create_window()
@@ -189,32 +187,29 @@ class MusicPlayer:
         text_to_copy = "\n".join(selected_texts)
         print(f'复制{text_to_copy}')
         # 这里只是简单地将文本打印出来，你可以根据需要修改（例如使用pyperclip库复制到剪贴板）
-        # messagebox.showinfo("复制", "已复制：\n" + text_to_copy)
         pyperclip.copy(text_to_copy)
 
     def create_window(self):
         # 创建一个Text控件来显示多行文本
-        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50)  # wrap='word' 表示在单词边界处换行
+        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50, font=("Helvetica", 14))  # wrap='word' 表示在单词边界处换行
         self.text_widget.pack(side=tk.BOTTOM, fill=tk.X, expand=False, pady=(0, 10))  # 放置在底部，水平填充，不扩展，并添加一些内边距
 
         # 插入一些长文本到Text控件中
         self.text_widget.insert(tk.END, '')
 
-        # 如果你想要禁用Text控件的编辑功能，可以设置其state为'disabled'
-        # self.text_widget.config(state='disabled')
         self.update_content()
         # 运行Tkinter事件循环
         self.master.mainloop()
 
     def update_content(self):
         # print(f'{self.long_text}')
-        # 创建字体样式
-        font_style = tkFont.Font(family="Helvetica", size=14)  # 使用Helvetica字体，大小为14
-        # 设置Text控件的字体
-        self.text_widget.configure(font=font_style)
         self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
         self.text_widget.insert(tk.END, self.long_text)  # 插入新文本
-        self.master.after(500, self.update_content)  # 每2秒更新一次内容
+        self.master.after(500, self.update_content)  # 每0.5秒更新一次内容
+
+    def clear_search(self):
+        self.search_entry.delete(0, tk.END)
+        self.search()
 
     # 搜索歌曲
     def search(self, event=None):
@@ -284,16 +279,6 @@ class MusicPlayer:
                 pygame.mixer.music.play()
                 time.sleep(get_mp3_duration(file_path))
 
-    # def button_play_loop(self):
-    #     if self.current_select_index < len(self.selected_indices) - 1:
-    #         self.current_select_index = self.current_select_index + 1
-    #         track = self.playlist.get(self.selected_indices[self.current_select_index])
-    #         file_path = os.path.join(self.music_dir, track + ".mp3")  # 假设文件后缀为 mp3
-    #         pygame.mixer.music.load(file_path)
-    #         pygame.mixer.music.play()
-    #         print(f'等待时间： {math.ceil(get_mp3_duration(file_path))}')
-    #         self.master.after(math.ceil(get_mp3_duration(file_path)), self.update_content)  # 每2秒更新一次内容
-
     # 暂停音频
     def pause(self):
         self.playing = False
@@ -333,14 +318,6 @@ class MusicPlayer:
 
     # 更新控制按钮状态
     def update_controls(self):
-        # if self.playing:
-        #     self.play_button.config(state=tk.DISABLED)
-        #     self.pause_button.config(state=tk.NORMAL)
-        #     self.stop_button.config(state=tk.NORMAL)
-        # else:
-        #     self.play_button.config(state=tk.NORMAL)
-        #     self.pause_button.config(state=tk.DISABLED)
-        #     self.stop_button.config(state=tk.DISABLED)
         self.play_button.config(state=tk.NORMAL)
         self.pause_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.NORMAL)
@@ -361,7 +338,6 @@ class MusicPlayer:
     def load_directory(self):
         directory = filedialog.askdirectory()
         if directory:
-            # self.music_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.mp3')]
             self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
             self.update_listbox()
             self.current_index = 0
