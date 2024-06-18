@@ -270,7 +270,8 @@ class MusicPlayer:
             # 保存图片到指定目录
             track = self.playlist.get(self.current_track)
             img_save_path = os.path.join(self.music_picture_dir, f"{track}.png")
-            img.save(img_save_path, "PNG")
+            with open(file_path, 'rb') as f_in, open(img_save_path, 'wb') as f_out:
+                f_out.write(f_in.read())
 
     def save_example(self):
         example_text = self.example_text.get("1.0", tk.END).strip()
