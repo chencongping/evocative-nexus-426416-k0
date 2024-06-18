@@ -243,7 +243,7 @@ class MusicPlayer:
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.gif")])
         if file_path:
             img = Image.open(file_path)
-            img.thumbnail((400, 400))
+            img.thumbnail((400, 400), Image.LANCZOS)
             img = ImageTk.PhotoImage(img)
             self.image_label.config(image=img)
             self.image_label.image = img  # 保存对图像对象的引用
@@ -324,7 +324,7 @@ class MusicPlayer:
         img_path = os.path.join(self.music_picture_dir, f"{track}.png")
         if os.path.exists(img_path):
             img = Image.open(img_path)
-            img.thumbnail((400, 400))
+            img.thumbnail((400, 400), Image.LANCZOS)
             img = ImageTk.PhotoImage(img)
             self.image_label.config(image=img)
             self.image_label.image = img  # 保存对图像对象的引用
