@@ -5,11 +5,10 @@ import os
 import pygame
 import re
 from tkinter import filedialog, messagebox
-import re
-import tkinter.font as tkFont
 from tkinter import Menu, messagebox
 import pyperclip
 from playerUtil import get_mp3_duration
+from PIL import Image, ImageTk
 
 
 class MusicPlayer:
@@ -20,7 +19,18 @@ class MusicPlayer:
         self.music_dir = (r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words\en-US'
                           r'-Journey-D')  # 替换成你的音乐目录
         self.music_explain_dir = (
-            r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words-and-explain')  # 替换成你的音乐目录
+            r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words-and-explain')  # 替换成你的例句目录
+        self.music_picture_dir = (
+            r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words-and-picture')  # 替换成你的图片目录
+        self.music_examples_dir = (
+            r'C:\Users\10843\OneDrive\文档\GitHub\evocative-nexus-426416-k0\output\5500-words-and-examples')  # 替换成你的例句目录
+        if not os.path.exists(self.music_explain_dir):
+            os.makedirs(self.music_explain_dir)
+        if not os.path.exists(self.music_picture_dir):
+            os.makedirs(self.music_picture_dir)
+        if not os.path.exists(self.music_examples_dir):
+            os.makedirs(self.music_examples_dir)
+
         self.music_files = []
 
         self.music_files = [f for f in os.listdir(self.music_dir) if f.endswith((".mp3", ".wav"))]
@@ -40,14 +50,14 @@ class MusicPlayer:
         pygame.mixer.init()
 
         # 创建主框架
-        self.main_frame = tk.Frame(master)
+        self.main_frame = ttk.Frame(master)
         self.main_frame.pack(fill="both", expand=True)
 
         # 添加菜单
-        menubar = tk.Menu(self.master)
+        menubar = Menu(self.master)
         self.master.config(menu=menubar)
 
-        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="文件", menu=filemenu)
         filemenu.add_command(label="打开文件", command=self.load_file)
         filemenu.add_command(label="打开目录", command=self.load_directory)
@@ -55,24 +65,24 @@ class MusicPlayer:
         filemenu.add_command(label="退出", command=self.master.quit)
 
         # 创建搜索框框架
-        self.search_frame = tk.Frame(self.main_frame)
+        self.search_frame = ttk.Frame(self.main_frame)
         self.search_frame.pack(side="top", fill="x", padx=10, pady=10)
 
         # 创建搜索框
-        self.search_entry = tk.Entry(self.search_frame, font=("Helvetica", 14))
+        self.search_entry = ttk.Entry(self.search_frame, font=("Helvetica", 14))
         self.search_entry.pack(side="left", padx=5, pady=5, fill="x", expand=True)
         self.search_entry.bind("<KeyRelease>", self.search)
 
         # 创建清除按钮
-        self.clear_button = tk.Button(self.search_frame, text="清除", command=self.clear_search, font=("Helvetica", 14))
+        self.clear_button = ttk.Button(self.search_frame, text="清除", command=self.clear_search, style='TButton')
         self.clear_button.pack(side="left", padx=5, pady=5)
 
         # 创建播放列表框架
-        self.playlist_frame = tk.Frame(self.main_frame, bd=2, relief=tk.GROOVE)
+        self.playlist_frame = ttk.Frame(self.main_frame, borderwidth=2, relief=tk.GROOVE)
         self.playlist_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # 创建播放控制框架
-        self.control_frame = tk.Frame(self.main_frame, bd=2, relief=tk.GROOVE)
+        self.control_frame = ttk.Frame(self.main_frame, borderwidth=2, relief=tk.GROOVE)
         self.control_frame.pack(side="right", fill="y", padx=10, pady=10)
 
         # 创建播放列表
@@ -81,32 +91,33 @@ class MusicPlayer:
         self.playlist.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
         # 创建滚动条
-        self.scrollbar = tk.Scrollbar(self.playlist_frame, orient="vertical", command=self.playlist.yview)
+        self.scrollbar = ttk.Scrollbar(self.playlist_frame, orient="vertical", command=self.playlist.yview)
         self.scrollbar.pack(side="right", fill="y")
         self.playlist.config(yscrollcommand=self.scrollbar.set)
 
         # 创建播放按钮
-        self.play_button = tk.Button(self.control_frame, text="播放", command=self.button_play, font=("Helvetica", 14))
+        self.play_button = ttk.Button(self.control_frame, text="播放", command=self.button_play, style='TButton')
         self.play_button.pack(pady=10)
 
         # 创建暂停按钮
-        self.pause_button = tk.Button(self.control_frame, text="暂停", command=self.pause, state=tk.DISABLED, font=("Helvetica", 14))
+        self.pause_button = ttk.Button(self.control_frame, text="暂停", command=self.pause, state=tk.DISABLED,
+                                       style='TButton')
         self.pause_button.pack(pady=10)
 
         # 创建停止按钮
-        self.stop_button = tk.Button(self.control_frame, text="停止", command=self.stop, font=("Helvetica", 14))
+        self.stop_button = ttk.Button(self.control_frame, text="停止", command=self.stop, style='TButton')
         self.stop_button.pack(pady=10)
 
         # 创建循环播放按钮
-        self.loop_button = tk.Button(self.control_frame, text="循环", command=self.toggle_loop, font=("Helvetica", 14))
+        self.loop_button = ttk.Button(self.control_frame, text="循环", command=self.toggle_loop, style='TButton')
         self.loop_button.pack(pady=10)
 
         # 创建随机播放按钮
-        self.shuffle_button = tk.Button(self.control_frame, text="随机", command=self.toggle_shuffle, font=("Helvetica", 14))
+        self.shuffle_button = ttk.Button(self.control_frame, text="随机", command=self.toggle_shuffle, style='TButton')
         self.shuffle_button.pack(pady=10)
 
         # 创建全选按钮
-        self.select_all_button = tk.Button(self.control_frame, text="全选", command=self.select_all, font=("Helvetica", 14))
+        self.select_all_button = ttk.Button(self.control_frame, text="全选", command=self.select_all, style='TButton')
         self.select_all_button.pack(pady=10)
 
         # 绑定事件
@@ -130,6 +141,7 @@ class MusicPlayer:
 
         # 初始化播放状态
         self.update_controls()
+        self.create_bottom_panel()
         self.create_window()
 
     def copy_to_clipboard(self, event):
@@ -191,7 +203,8 @@ class MusicPlayer:
 
     def create_window(self):
         # 创建一个Text控件来显示多行文本
-        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50, font=("Helvetica", 14))  # wrap='word' 表示在单词边界处换行
+        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50,
+                                   font=("Helvetica", 14))  # wrap='word' 表示在单词边界处换行
         self.text_widget.pack(side=tk.BOTTOM, fill=tk.X, expand=False, pady=(0, 10))  # 放置在底部，水平填充，不扩展，并添加一些内边距
 
         # 插入一些长文本到Text控件中
@@ -201,8 +214,55 @@ class MusicPlayer:
         # 运行Tkinter事件循环
         self.master.mainloop()
 
+    def create_bottom_panel(self):
+        # 创建底部框架，用于显示图片和例句
+        self.bottom_frame = ttk.Frame(self.master)
+        self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=10, pady=10, expand=True)
+
+        # 图片显示模块
+        self.image_frame = ttk.LabelFrame(self.bottom_frame, text="图片")
+        self.image_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.image_label = ttk.Label(self.image_frame)
+        self.image_label.pack(fill=tk.BOTH, expand=True)
+
+        self.upload_button = ttk.Button(self.image_frame, text="上传图片", command=self.upload_image)
+        self.upload_button.pack(side=tk.BOTTOM, pady=5)
+
+        # 例句模块
+        self.example_frame = ttk.LabelFrame(self.bottom_frame, text="例句")
+        self.example_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.example_text = tk.Text(self.example_frame, wrap='word', font=("Helvetica", 14), height=15)
+        self.example_text.pack(fill=tk.BOTH, expand=True)
+
+        self.save_button = ttk.Button(self.example_frame, text="保存例句", command=self.save_example)
+        self.save_button.pack(side=tk.BOTTOM, pady=5)
+
+    def upload_image(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.gif")])
+        if file_path:
+            img = Image.open(file_path)
+            img.thumbnail((400, 400))
+            img = ImageTk.PhotoImage(img)
+            self.image_label.config(image=img)
+            self.image_label.image = img  # 保存对图像对象的引用
+
+            # 保存图片到指定目录
+            track = self.playlist.get(self.current_track)
+            img_save_path = os.path.join(self.music_picture_dir, f"{track}.png")
+            with open(file_path, 'rb') as f_in, open(img_save_path, 'wb') as f_out:
+                f_out.write(f_in.read())
+
+    def save_example(self):
+        example_text = self.example_text.get("1.0", tk.END).strip()
+        track = self.playlist.get(self.current_track)
+        example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
+        with open(example_file, 'w', encoding='utf-8') as file:
+            file.write(example_text)
+        messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
+
     def update_content(self):
-        # print(f'{self.long_text}')
         self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
         self.text_widget.insert(tk.END, self.long_text)  # 插入新文本
         self.master.after(500, self.update_content)  # 每0.5秒更新一次内容
@@ -254,6 +314,31 @@ class MusicPlayer:
         self.current_see = self.current_track
         self.long_text = self.get_explain(track)
 
+        # 显示对应图片
+        self.display_image(track)
+
+        # 显示对应例句
+        self.display_example(track)
+
+    def display_image(self, track):
+        img_path = os.path.join(self.music_picture_dir, f"{track}.png")
+        if os.path.exists(img_path):
+            img = Image.open(img_path)
+            img.thumbnail((400, 400))
+            img = ImageTk.PhotoImage(img)
+            self.image_label.config(image=img)
+            self.image_label.image = img  # 保存对图像对象的引用
+
+    def display_example(self, track):
+        example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
+        if os.path.exists(example_file):
+            with open(example_file, 'r', encoding='utf-8') as file:
+                content = file.read()
+            self.example_text.delete("1.0", tk.END)
+            self.example_text.insert(tk.END, content)
+        else:
+            self.example_text.delete("1.0", tk.END)
+
     def get_explain(self, word):
         explain_file = f'{self.music_explain_dir}/{word}.txt'
         if os.path.exists(explain_file):
@@ -268,7 +353,6 @@ class MusicPlayer:
         self.selected_indices = self.playlist.curselection()
         print(f'{self.selected_indices}')
 
-        self.selected_indices_max_index
         if self.selected_indices:
             for current_track in self.selected_indices:
                 self.current_track = current_track
