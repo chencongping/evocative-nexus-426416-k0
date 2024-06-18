@@ -260,7 +260,7 @@ class MusicPlayer:
         example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
         with open(example_file, 'w', encoding='utf-8') as file:
             file.write(example_text)
-        messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
+        # messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
 
     def update_content(self):
         self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
@@ -321,13 +321,16 @@ class MusicPlayer:
         self.display_example(track)
 
     def display_image(self, track):
-        img_path = os.path.join(self.music_picture_dir, f"{track}.png")
+        img_path = f"{self.music_picture_dir}/{track}.png"
         if os.path.exists(img_path):
             img = Image.open(img_path)
             img.thumbnail((400, 400), Image.LANCZOS)
             img = ImageTk.PhotoImage(img)
             self.image_label.config(image=img)
             self.image_label.image = img  # 保存对图像对象的引用
+        else:
+            # 图片不存在，清除图片
+            self.image_label.config(image='')  # 清除图片
 
     def display_example(self, track):
         example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
