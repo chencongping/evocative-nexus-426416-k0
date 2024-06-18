@@ -9,6 +9,7 @@ from tkinter import Menu, messagebox
 import pyperclip
 from playerUtil import get_mp3_duration
 from PIL import Image, ImageTk
+import io
 
 
 class MusicPlayer:
@@ -41,10 +42,11 @@ class MusicPlayer:
         self.current_index = 10
         self.current_see = 0
         self.text_widget = None
-        self.long_text = ''
+        self.explain_text = ''
         self.current_select_index = 0
         self.selected_indices = []
         self.selected_indices_max_index = 0
+        self.auto_save = True  # 自动保存模式
 
         # 初始化 Pygame
         pygame.mixer.init()
@@ -154,11 +156,24 @@ class MusicPlayer:
     def paste_from_clipboard(self, event):
         try:
             clipboard_text = self.master.clipboard_get()
-            self.search_entry.insert(tk.INSERT, clipboard_text)
-            print(f'粘贴{clipboard_text}')
+            # 判断是否为图片
+            if clipboard_text.startswith('data:image/'):
+                image_data = clipboard_text.split(',')[1]
+                image_bytes = io.BytesIO(base64.b64decode(image_data))
+                img = Image.open(image_bytes)
+                self.save_pasted_image(img)
+            else:
+                self.search_entry.insert(tk.INSERT, clipboard_text)
+                print(f'粘贴{clipboard_text}')
         except tk.TclError:
             print("Clipboard is empty or invalid content.")
         return "break"
+
+    def save_pasted_image(self, img):
+        track = self.playlist.get(self.current_track)
+        img_save_path = os.path.join(self.music_picture_dir, f"{track}.png")
+        img.save(img_save_path, "PNG")
+        self.display_image(track)
 
     def undo(self, event):
         if self.search_entry.get():
@@ -210,7 +225,9 @@ class MusicPlayer:
         # 插入一些长文本到Text控件中
         self.text_widget.insert(tk.END, '')
 
-        self.update_content()
+        self.text_widget.bind("<KeyRelease>", self.text_changed)
+
+        # self.update_content()
         # 运行Tkinter事件循环
         self.master.mainloop()
 
@@ -220,18 +237,20 @@ class MusicPlayer:
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=10, pady=10, expand=True)
 
         # 图片显示模块
-        self.image_frame = ttk.LabelFrame(self.bottom_frame, text="图片")
-        self.image_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.image_frame = ttk.LabelFrame(self.bottom_frame, text="图片", width=400, height=400)
+        self.image_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=10, pady=10)
+        self.image_frame.pack_propagate(0)
 
         self.image_label = ttk.Label(self.image_frame)
-        self.image_label.pack(fill=tk.BOTH, expand=True)
+        self.image_label.pack(expand=True)
 
         self.upload_button = ttk.Button(self.image_frame, text="上传图片", command=self.upload_image)
         self.upload_button.pack(side=tk.BOTTOM, pady=5)
 
         # 例句模块
-        self.example_frame = ttk.LabelFrame(self.bottom_frame, text="例句")
+        self.example_frame = ttk.LabelFrame(self.bottom_frame, text="例句", width=400, height=400)
         self.example_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.example_frame.pack_propagate(0)
 
         self.example_text = tk.Text(self.example_frame, wrap='word', font=("Helvetica", 14), height=15)
         self.example_text.pack(fill=tk.BOTH, expand=True)
@@ -251,8 +270,7 @@ class MusicPlayer:
             # 保存图片到指定目录
             track = self.playlist.get(self.current_track)
             img_save_path = os.path.join(self.music_picture_dir, f"{track}.png")
-            with open(file_path, 'rb') as f_in, open(img_save_path, 'wb') as f_out:
-                f_out.write(f_in.read())
+            img.save(img_save_path, "PNG")
 
     def save_example(self):
         example_text = self.example_text.get("1.0", tk.END).strip()
@@ -260,12 +278,23 @@ class MusicPlayer:
         example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
         with open(example_file, 'w', encoding='utf-8') as file:
             file.write(example_text)
-        # messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
+        messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
 
-    def update_content(self):
-        self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
-        self.text_widget.insert(tk.END, self.long_text)  # 插入新文本
-        self.master.after(500, self.update_content)  # 每0.5秒更新一次内容
+    # def update_content(self):
+    #     self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
+    #     self.text_widget.insert(tk.END, self.explain_text)  # 插入新文本
+    #     self.master.after(500, self.update_content)  # 每0.5秒更新一次内容
+
+    def text_changed(self, event=None):
+        if self.auto_save:
+            self.save_explanation()
+
+    def save_explanation(self):
+        explain_text = self.text_widget.get("1.0", tk.END).strip()
+        track = self.playlist.get(self.current_track)
+        explain_file = os.path.join(self.music_explain_dir, f"{track}.txt")
+        with open(explain_file, 'w', encoding='utf-8') as file:
+            file.write(explain_text)
 
     def clear_search(self):
         self.search_entry.delete(0, tk.END)
@@ -312,13 +341,14 @@ class MusicPlayer:
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
         self.current_see = self.current_track
-        self.long_text = self.get_explain(track)
+        self.explain_text = self.get_explain(track)
 
         # 显示对应图片
         self.display_image(track)
 
         # 显示对应例句
         self.display_example(track)
+        self.display_explain(self.explain_text)
 
     def display_image(self, track):
         img_path = f"{self.music_picture_dir}/{track}.png"
@@ -341,6 +371,10 @@ class MusicPlayer:
             self.example_text.insert(tk.END, content)
         else:
             self.example_text.delete("1.0", tk.END)
+
+    def display_explain(self, explain_text):
+        self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
+        self.text_widget.insert(tk.END, self.explain_text)  # 插入新文本
 
     def get_explain(self, word):
         explain_file = f'{self.music_explain_dir}/{word}.txt'
