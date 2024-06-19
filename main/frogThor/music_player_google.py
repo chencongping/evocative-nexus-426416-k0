@@ -219,7 +219,7 @@ class MusicPlayer:
     def create_window(self):
         # 创建一个Text控件来显示多行文本
         self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50,
-                                   font=("Helvetica", 14))  # wrap='word' 表示在单词边界处换行
+                                   font=("Helvetica", 50))  # wrap='word' 表示在单词边界处换行
         self.text_widget.pack(side=tk.BOTTOM, fill=tk.X, expand=False, pady=(0, 10))  # 放置在底部，水平填充，不扩展，并添加一些内边距
 
         # 插入一些长文本到Text控件中
@@ -279,7 +279,7 @@ class MusicPlayer:
         example_file = os.path.join(self.music_examples_dir, f"{track}.txt")
         with open(example_file, 'w', encoding='utf-8') as file:
             file.write(example_text)
-        messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
+        # messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
 
     # def update_content(self):
     #     self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
@@ -349,7 +349,7 @@ class MusicPlayer:
 
         # 显示对应例句
         self.display_example(track)
-        self.display_explain(self.explain_text)
+        self.display_explain(track)
 
     def display_image(self, track):
         img_path = f"{self.music_picture_dir}/{track}.png"
@@ -373,8 +373,11 @@ class MusicPlayer:
         else:
             self.example_text.delete("1.0", tk.END)
 
-    def display_explain(self, explain_text):
+    def display_explain(self, track):
         self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
+        self.text_widget.insert(tk.END, track)  # 插入新文本
+        self.text_widget.insert(tk.END, "\n")  # 插入新文本
+        self.text_widget.insert(tk.END, "\n")  # 插入新文本
         self.text_widget.insert(tk.END, self.explain_text)  # 插入新文本
 
     def get_explain(self, word):
