@@ -1,3 +1,4 @@
+import base64
 import time
 import tkinter as tk
 from tkinter import ttk
@@ -83,6 +84,10 @@ class MusicPlayer:
         self.playlist_frame = ttk.Frame(self.main_frame, borderwidth=2, relief=tk.GROOVE)
         self.playlist_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
+        # 创建文本展示框架
+        self.text_display_frame = ttk.Frame(self.main_frame, borderwidth=2, relief=tk.GROOVE)
+        self.text_display_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
         # 创建播放控制框架
         self.control_frame = ttk.Frame(self.main_frame, borderwidth=2, relief=tk.GROOVE)
         self.control_frame.pack(side="right", fill="y", padx=10, pady=10)
@@ -96,6 +101,11 @@ class MusicPlayer:
         self.scrollbar = ttk.Scrollbar(self.playlist_frame, orient="vertical", command=self.playlist.yview)
         self.scrollbar.pack(side="right", fill="y")
         self.playlist.config(yscrollcommand=self.scrollbar.set)
+
+        # 创建文本展示框
+        self.text_display = tk.Text(self.text_display_frame, wrap='word', font=("Helvetica", 14), height=15)
+        self.text_display.pack(fill="both", expand=True, padx=5, pady=5)
+        self.text_display.bind("<KeyRelease>", self.text_changed)
 
         # 创建播放按钮
         self.play_button = ttk.Button(self.control_frame, text="播放", command=self.button_play, style='TButton')
@@ -144,7 +154,6 @@ class MusicPlayer:
         # 初始化播放状态
         self.update_controls()
         self.create_bottom_panel()
-        self.create_window()
 
     def copy_to_clipboard(self, event):
         selected_items = self.playlist.curselection()
@@ -216,21 +225,6 @@ class MusicPlayer:
         # 这里只是简单地将文本打印出来，你可以根据需要修改（例如使用pyperclip库复制到剪贴板）
         pyperclip.copy(text_to_copy)
 
-    def create_window(self):
-        # 创建一个Text控件来显示多行文本
-        self.text_widget = tk.Text(self.master, wrap='word', height=10, width=50,
-                                   font=("Helvetica", 50))  # wrap='word' 表示在单词边界处换行
-        self.text_widget.pack(side=tk.BOTTOM, fill=tk.X, expand=False, pady=(0, 10))  # 放置在底部，水平填充，不扩展，并添加一些内边距
-
-        # 插入一些长文本到Text控件中
-        self.text_widget.insert(tk.END, '')
-
-        self.text_widget.bind("<KeyRelease>", self.text_changed)
-
-        # self.update_content()
-        # 运行Tkinter事件循环
-        self.master.mainloop()
-
     def create_bottom_panel(self):
         # 创建底部框架，用于显示图片和例句
         self.bottom_frame = ttk.Frame(self.master)
@@ -281,21 +275,16 @@ class MusicPlayer:
             file.write(example_text)
         # messagebox.showinfo("保存成功", f"例句已保存到 {example_file}")
 
-    # def update_content(self):
-    #     self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
-    #     self.text_widget.insert(tk.END, self.explain_text)  # 插入新文本
-    #     self.master.after(500, self.update_content)  # 每0.5秒更新一次内容
-
     def text_changed(self, event=None):
         if self.auto_save:
             self.save_explanation()
 
     def save_explanation(self):
-        explain_text = self.text_widget.get("1.0", tk.END).strip()
+        text = self.text_display.get("1.0", tk.END).strip()
         track = self.playlist.get(self.current_track)
         explain_file = os.path.join(self.music_explain_dir, f"{track}.txt")
         with open(explain_file, 'w', encoding='utf-8') as file:
-            file.write(explain_text)
+            file.write(text)
 
     def clear_search(self):
         self.search_entry.delete(0, tk.END)
@@ -374,11 +363,11 @@ class MusicPlayer:
             self.example_text.delete("1.0", tk.END)
 
     def display_explain(self, track):
-        self.text_widget.delete('1.0', tk.END)  # 删除当前所有内容
-        self.text_widget.insert(tk.END, track)  # 插入新文本
-        self.text_widget.insert(tk.END, "\n")  # 插入新文本
-        self.text_widget.insert(tk.END, "\n")  # 插入新文本
-        self.text_widget.insert(tk.END, self.explain_text)  # 插入新文本
+        self.text_display.delete('1.0', tk.END)  # 删除当前所有内容
+        self.text_display.insert(tk.END, track)  # 插入新文本
+        self.text_display.insert(tk.END, "\n")  # 插入新文本
+        self.text_display.insert(tk.END, "\n")  # 插入新文本
+        self.text_display.insert(tk.END, self.explain_text)  # 插入新文本
 
     def get_explain(self, word):
         explain_file = f'{self.music_explain_dir}/{word}.txt'
