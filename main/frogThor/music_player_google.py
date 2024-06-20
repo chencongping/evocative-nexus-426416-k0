@@ -15,6 +15,13 @@ import io
 
 class MusicPlayer:
     def __init__(self, master):
+        self.save_button = None
+        self.example_text = None
+        self.bottom_frame = None
+        self.image_frame = None
+        self.image_label = None
+        self.example_frame = None
+        self.upload_button = None
         self.master = master
         master.title("单词杀手")
 
@@ -103,7 +110,7 @@ class MusicPlayer:
         self.playlist.config(yscrollcommand=self.scrollbar.set)
 
         # 创建文本展示框
-        self.text_display = tk.Text(self.text_display_frame, wrap='word', font=("Helvetica", 14), height=15)
+        self.text_display = tk.Text(self.text_display_frame, wrap='word', font=("Helvetica", 20), height=4)
         self.text_display.pack(fill="both", expand=True, padx=5, pady=5)
         self.text_display.bind("<KeyRelease>", self.text_changed)
 
@@ -343,11 +350,17 @@ class MusicPlayer:
     def display_image(self, track):
         img_path = f"{self.music_picture_dir}/{track}.png"
         if os.path.exists(img_path):
+            # 获取LabelFrame的内部宽度和高度（去掉边框和填充）
+            label_frame_width = self.image_frame.winfo_reqwidth() * 0.6
+            label_frame_height = self.image_frame.winfo_reqheight() * 0.4
             img = Image.open(img_path)
-            img.thumbnail((400, 400), Image.LANCZOS)
+            # 计算等比例缩放后的图片大小
+            max_size = (label_frame_width, label_frame_height)
+            img.thumbnail(max_size, Image.LANCZOS)
             img = ImageTk.PhotoImage(img)
             self.image_label.config(image=img)
             self.image_label.image = img  # 保存对图像对象的引用
+
         else:
             # 图片不存在，清除图片
             self.image_label.config(image='')  # 清除图片
